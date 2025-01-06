@@ -1,4 +1,5 @@
-from utils import caculate_hash_id
+from utils import caculate_hash_id  # type: ignore
+import os
 
 
 class Dir:
@@ -28,10 +29,17 @@ class File:
     dir: str
     source: bool
     error: str
-    dir_ptr: Dir
+    # dir_ptr: Dir
 
     def __init__(self, path: str):
+        # self.dir_ptr
+        self.id = caculate_hash_id(path)
         self.path = path
+        self.name = os.path.basename(path)
+        self.dir = os.path.dirname(path)
+        self.source = False
+        self.error = ""
+        # self.dir_ptr
 
     def dump(self):
         return {}
