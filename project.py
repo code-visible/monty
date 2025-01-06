@@ -1,6 +1,8 @@
 from sourcecode import Dir, File, Dep
 import os
 
+from protocol.map import Source
+
 
 class Project:
     """Class representing a project"""
@@ -29,17 +31,37 @@ class Project:
     def traverse(self, dir: str):
         entries = os.listdir(dir)
         for entry in entries:
-            isDir = os.path.isdir(entry)
+            current_entry = os.path.join(dir, entry)
+            if current_entry.startswith("./"):
+                current_entry = current_entry[2:]
+            isDir = os.path.isdir(current_entry)
             if isDir:
-                self.dirs[entry] = Dir(entry)
-                self.traverse(entry)
+                self.dirs[current_entry] = Dir(current_entry)
+                self.traverse(current_entry)
             else:
-                file = File(entry)
-                self.files[entry] = file
-                self.deps[entry] = Dep(file)
+                file = File(current_entry)
+                self.files[current_entry] = file
+                self.deps[current_entry] = Dep(file)
 
     def parse_files(self):
         pass
 
-    def dump(self):
-        return {}
+    def dump(self) -> Source:
+        result = {
+            "name": self.name,
+            "directory": self.directory,
+            "language": "python",
+            "pkgs": [],
+            "files": [],
+            "abstracts": [],
+            "callables": [],
+            "calls": [],
+            "deps": [],
+        }
+        for p in self.dirs.values():
+            result["pkgs"].append(p.dump())
+        for f in self.files.values():
+            result["files"].append(f.dump())
+        for d in self.deps.values():
+            result["deps"].append(d.dump())
+        return result
