@@ -130,3 +130,5 @@ dmypy.json
 dict/
 .DS_Store
 dist/
+
+testdata
