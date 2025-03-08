@@ -10,8 +10,7 @@ Source = TypedDict(
     "Source",
     {
         "name": str,
-        "directory": str,
-        "language": str,
+        "lang": str,
         "pkgs": list[SourcePkg],
         "files": list[SourceFile],
         "abstracts": list[SourceAbstract],

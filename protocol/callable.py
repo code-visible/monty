@@ -9,12 +9,10 @@ SourceCallable = TypedDict(
         "signature": str,
         "abstract": str,
         "file": str,
-        "pkg": str,
         "comment": str,
         "parameters": list[str],
         "results": list[str],
         "method": bool,
         "private": bool,
-        "orphan": bool,
     },
 )

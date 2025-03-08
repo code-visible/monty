@@ -7,7 +7,6 @@ SourceAbstract = TypedDict(
         "pos": str,
         "name": str,
         "file": str,
-        "pkg": str,
         "comment": str,
         "fields": list[str],
     },

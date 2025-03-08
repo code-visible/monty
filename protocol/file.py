@@ -8,5 +8,6 @@ SourceFile = TypedDict(
         "path": str,
         "pkg": str,
         "deps": list[str],
+        "imports": list[str],
     },
 )
