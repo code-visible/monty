@@ -1,8 +1,10 @@
 from sourcecode import Dir, File, Dep
 import os
+from common import DepType
+from monty import PARSER_NAME, VESION, LANG, TYPE_NORMAL
 
 from protocol.map import Source
-
+from datetime import datetime, timezone
 
 class Project:
     """Class representing a project"""
@@ -25,7 +27,10 @@ class Project:
     def scan(self):
         os.chdir(self.path)
         if os.path.isdir(self.directory):
-            self.dirs[self.directory] = Dir(self.directory)
+            root = Dir(self.directory)
+            self.dirs[self.directory] = root
+            self.deps[self.directory] = Dep(root, DepType.PKG)
+            self.deps[""] = Dep(root, DepType.PKG)
             self.traverse(self.directory)
 
     def traverse(self, dir: str):
@@ -36,32 +41,73 @@ class Project:
                 current_entry = current_entry[2:]
             isDir = os.path.isdir(current_entry)
             if isDir:
-                self.dirs[current_entry] = Dir(current_entry)
+                pkg = Dir(current_entry)
+                self.dirs[current_entry] =pkg
+                self.deps[current_entry] = Dep(pkg, DepType.PKG)
                 self.traverse(current_entry)
             else:
-                file = File(current_entry)
+                d = self.lookup(dir, 1)
+
+                assert d != None and d.typ == DepType.PKG
+
+                file = File(current_entry, d.pkg_ptr)
+                self.deps[current_entry] = Dep(file, DepType.FILE)
                 self.files[current_entry] = file
-                self.deps[current_entry] = Dep(file)
 
     def parse_files(self):
+        for f in self.files.values():
+            if f.source:
+                f.parse(self.lookup)
+
+    def build_dependencies(self):
+        for f in self.files.values():
+            if f.source:
+                f.connect()
+
+        for f in self.files.values():
+            if f.source:
+                f.liftup()
+    
+    def complete_fields(self):
         pass
+    
+    # 0: all, 1: pkg, 2: file
+    def lookup(self, name: str, typ: int) -> Dep|None:
+        if typ == 2:
+            return self.deps.get(name+".py")
+        if typ == 1:
+            return self.deps.get(name)
+        else:
+            r = self.deps.get(name)
+            if r != None:
+                return r
+            return self.deps.get(name+".py")
 
     def dump(self) -> Source:
+        now = datetime.now(timezone.utc).astimezone()
+
         result = {
             "name": self.name,
-            "directory": self.directory,
-            "language": "python",
+            "lang": LANG,
+            "parser": "%s %s"%(PARSER_NAME, VESION),
+            "typ": TYPE_NORMAL,
+            "timestamp": now.isoformat(),
+            "repository": "",
+            "version": "",
             "pkgs": [],
             "files": [],
-            "abstracts": [],
-            "callables": [],
+            "absts": [],
+            "fns": [],
             "calls": [],
             "deps": [],
+            "refs": [],
         }
         for p in self.dirs.values():
             result["pkgs"].append(p.dump())
         for f in self.files.values():
             result["files"].append(f.dump())
         for d in self.deps.values():
+            if d.typ == DepType.PKG:
+                continue
             result["deps"].append(d.dump())
         return result

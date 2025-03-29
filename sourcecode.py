@@ -1,5 +1,10 @@
 from utils import caculate_hash_id  # type: ignore
 import os
+import ast
+from parser import Parser
+from common import DepType
+from typing import Self
+from utils import is_source, format_path
 
 from protocol.pkg import SourcePkg
 from protocol.dep import SourceDep
@@ -13,18 +18,26 @@ class Dir:
     path: str
     files: int
     pkg: bool
+    imps: set[Self]
 
     def __init__(self, path: str):
         self.id = caculate_hash_id(path)
         self.path = path
         self.files = 0
         self.pkg = False
+        self.imps = set()
 
     def dump(self) -> SourcePkg:
+        noramlized_path = format_path(self.path)
+        imports = []
+        for i in self.imps:
+            imports.append(i.id)
         return {
             "id": self.id,
-            "name": self.path,
-            "path": self.path,
+            "name": os.path.basename(noramlized_path),
+            "path": noramlized_path,
+            "imports": imports,
+            "deps": [],
         }
 
 
@@ -34,54 +47,96 @@ class File:
     id: str
     path: str
     name: str
-    dir: str
+    dir: Dir
     source: bool
+    ast: str
     error: str
-    # dir_ptr: Dir
+    parser: Parser|None
+    imps: set[Self]
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, dir: Dir):
+        assert dir != None
+
         self.id = caculate_hash_id(path)
         self.path = path
         self.name = os.path.basename(path)
-        dir = os.path.dirname(path)
-        if dir == "":
-            self.dir = "."
-        else:
-            self.dir = dir
-        self.source = False
+        self.dir = dir
+        self.source = is_source(path)
         self.error = ""
-        # self.dir_ptr
+        self.parser = None
+        self.dir_ptr = None
+        self.imps = set()
+    
+    def parse(self, lookup: any):
+        with open(self.path, 'r') as file:
+            content = file.read()
+            self.ast = ast.parse(content)
+        self.parser = Parser(self.name, self.dir.path, self.ast, lookup)
+        self.parser.parse_source()
+    
+    def connect(self):
+        for d in self.parser.deps.values():
+            if d.typ == DepType.FILE:
+                f = d.file_ptr
+                self.imps.add(f)
+
+    def liftup(self):
+        for f in self.imps:
+            if self.dir != f.dir:
+                self.dir.imps.add(f.dir)
 
     def dump(self) -> SourceFile:
+        noramlized_path = format_path(self.dir.path)
+        imports = []
+        if self.source:
+            for i in self.imps:
+                imports.append(i.id)
+        # TODO: support normal deps in import parse
+        # deps = set()
+        # if self.source:
+        #     for d in self.parser.deps.values():
+        #         deps.add(d.id)
         result = {
             "id": self.id,
             "name": self.name,
-            "path": self.dir,
-            "pkg": "",
+            "path": noramlized_path,
+            "pkg": self.dir.id,
+            "imports": imports,
+            # "deps": [item for item in deps],
             "deps": [],
         }
         return result
-
 
 class Dep:
     """Class representing a dependency"""
 
     id: str
     name: str
-    typ: str
+    typ: DepType
     file_ptr: str
+    pkg_ptr: str
 
-    def __init__(self, file: File):
-        self.id = caculate_hash_id(file.name)
-        self.name = file.name
-        self.typ = "file"
-        self.file_ptr = file
-
+    def __init__(self, ptr: File|Dir, typ: DepType):
+        self.id = caculate_hash_id(ptr.path)
+        self.name = ptr.path
+        self.typ = typ
+        if typ == DepType.PKG:
+            self.pkg_ptr = ptr
+        else:
+            self.file_ptr = ptr
+    
     def dump(self) -> SourceDep:
+        assert self.typ != DepType.PKG
+        type = "file"
+        if self.typ == DepType.MOD:
+            type = "mod"
+        else:
+            # trapped into panic
+            type = "pkg"
         result = {
             "id": self.id,
             "name": self.name,
-            "type": self.typ,
+            "type": type,
             "ref": "",
         }
         return result
