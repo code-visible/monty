@@ -32,9 +32,10 @@ class Dir:
         imports = []
         for i in self.imps:
             imports.append(i.id)
+        name = os.path.basename(noramlized_path)
         return {
             "id": self.id,
-            "name": os.path.basename(noramlized_path),
+            "name": "/" if name == "" else name,
             "path": noramlized_path,
             "imports": imports,
             "deps": [],
@@ -71,7 +72,7 @@ class File:
         with open(self.path, 'r') as file:
             content = file.read()
             self.ast = ast.parse(content)
-        self.parser = Parser(self.name, self.dir.path, self.ast, lookup)
+        self.parser = Parser(self, lookup)
         self.parser.parse_source()
     
     def connect(self):
