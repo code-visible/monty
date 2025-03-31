@@ -121,4 +121,10 @@ class Project:
             if d.typ == DepType.PKG:
                 continue
             result["deps"].append(d.dump())
+        for f in self.files.values():
+            if f.source:
+                for fn in f.parser.fns.values():
+                    result["fns"].append(fn.dump())
+                for abst in f.parser.absts.values():
+                    result["absts"].append(abst.dump())
         return result
