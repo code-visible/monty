@@ -21,7 +21,7 @@ class Project:
     files: dict[str, File]
     deps: dict[str, Dep]
 
-    def __init__(self, name: str, path: str, directory: str, excludes: str):
+    def __init__(self, name: str, path: str, directory: str, excludes: str, file_types: str):
         self.name = name
         self.path = path
         self.abs_path = os.path.abspath(path)
@@ -33,11 +33,10 @@ class Project:
         self.excludes_dot = False
         self.includes = set()
         self.includes_file_types = set()
+        self.includes_file_types.add("py")
 
-        if excludes != "":
-            self.build_excludes(excludes)
-        else:
-            self.build_excludes(DEFAULT_EXCLUDE_DIRECTORIES)
+        self.build_excludes(excludes)
+        self.parse_file_types(file_types)
     
     def build_excludes(self, excls: str):
         excludes_list = excls.split(",")
@@ -48,6 +47,14 @@ class Project:
             else:
                 excl_absp = os.path.join(self.abs_path, excl_normalized)
                 self.excludes.add(excl_absp)
+    
+    def parse_file_types(self, file_types: str):
+        file_types_list = file_types.split(",")
+        for typ in file_types_list:
+            if typ.startswith("*."):
+                self.includes_file_types.add(typ[2:])
+            else:
+                self.includes.add(typ)
 
     def scan(self):
         os.chdir(self.path)
@@ -76,6 +83,16 @@ class Project:
                 self.deps[current_entry] = Dep(pkg, DepType.PKG)
                 self.traverse(current_entry)
             else:
+                should_parse = False
+                if entry in self.includes:
+                    should_parse = True
+                if not should_parse:
+                    file_segements = entry.split(".")
+                    if len(file_segements) > 1:
+                        if file_segements[-1] in self.includes_file_types:
+                            should_parse = True
+                if not should_parse:
+                    continue
                 d = self.lookup(dir, 1)
 
                 assert d != None and d.typ == DepType.PKG
