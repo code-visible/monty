@@ -11,18 +11,26 @@ class Project:
 
     name: str
     path: str
+    excludes: set
     directory: str
     dirs: dict[str, Dir]
     files: dict[str, File]
     deps: dict[str, Dep]
 
-    def __init__(self, name: str, path: str, directory: str):
+    def __init__(self, name: str, path: str, directory: str, excludes: str):
         self.name = name
         self.path = path
         self.directory = directory
         self.dirs = {}
         self.files = {}
         self.deps = {}
+        self.excludes = set()
+        if excludes != "":
+            excludes_list = excludes.split(",")
+            for excl in excludes_list:
+                excl_normalized = os.path.join(path, excl.strip())
+                excl_absp = os.path.abspath(excl_normalized)
+                self.excludes.add(excl_absp)
 
     def scan(self):
         os.chdir(self.path)
@@ -37,6 +45,9 @@ class Project:
         entries = os.listdir(dir)
         for entry in entries:
             current_entry = os.path.join(dir, entry)
+            absp = os.path.abspath(current_entry)
+            if absp in self.excludes:
+                continue
             if current_entry.startswith("./"):
                 current_entry = current_entry[2:]
             isDir = os.path.isdir(current_entry)
