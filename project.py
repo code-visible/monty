@@ -1,7 +1,7 @@
 from sourcecode import Dir, File, Dep
 import os
 from common import DepType
-from monty import PARSER_NAME, VESION, LANG, TYPE_NORMAL
+from monty import PARSER_NAME, VESION, LANG, TYPE_NORMAL, DEFAULT_EXCLUDE_DIRECTORIES, DEFAULT_INCLUDE_FILE_TYPES
 
 from protocol.map import Source
 from datetime import datetime, timezone
@@ -11,7 +11,11 @@ class Project:
 
     name: str
     path: str
+    abs_path: str
     excludes: set
+    excludes_dot: bool
+    includes: set
+    includes_file_types: set
     directory: str
     dirs: dict[str, Dir]
     files: dict[str, File]
@@ -20,16 +24,29 @@ class Project:
     def __init__(self, name: str, path: str, directory: str, excludes: str):
         self.name = name
         self.path = path
+        self.abs_path = os.path.abspath(path)
         self.directory = directory
         self.dirs = {}
         self.files = {}
         self.deps = {}
         self.excludes = set()
+        self.excludes_dot = False
+        self.includes = set()
+        self.includes_file_types = set()
+
         if excludes != "":
-            excludes_list = excludes.split(",")
-            for excl in excludes_list:
-                excl_normalized = os.path.join(path, excl.strip())
-                excl_absp = os.path.abspath(excl_normalized)
+            self.build_excludes(excludes)
+        else:
+            self.build_excludes(DEFAULT_EXCLUDE_DIRECTORIES)
+    
+    def build_excludes(self, excls: str):
+        excludes_list = excls.split(",")
+        for excl in excludes_list:
+            excl_normalized = excl.strip()
+            if excl_normalized == ".*":
+                self.excludes_dot = True
+            else:
+                excl_absp = os.path.join(self.abs_path, excl_normalized)
                 self.excludes.add(excl_absp)
 
     def scan(self):
@@ -44,6 +61,8 @@ class Project:
     def traverse(self, dir: str):
         entries = os.listdir(dir)
         for entry in entries:
+            if self.excludes_dot and entry.startswith("."):
+                continue
             current_entry = os.path.join(dir, entry)
             absp = os.path.abspath(current_entry)
             if absp in self.excludes:
