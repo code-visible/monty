@@ -1,6 +1,7 @@
-from utils import caculate_hash_id  # type: ignore
-from protocol.callable import SourceCallable
 from protocol.abstract import SourceAbstract
+from protocol.callable import SourceCallable
+from utils import caculate_hash_id  # type: ignore
+
 
 class Callabale:
     """Class representing a Python function"""
@@ -9,7 +10,7 @@ class Callabale:
     name: str
     signature: str
     abstract: str
-    file: any # File
+    file: any  # File
     comment: str
     parameters: list[str]
     method: bool
@@ -17,12 +18,12 @@ class Callabale:
 
     def __init__(self, abst: str, node: any, file: any):
         param_names = [arg.arg for arg in node.args.args]
-        pos = "%s:%s:%s"%(file.path, node.lineno, node.col_offset)
+        pos = "%s:%s:%s" % (file.path, node.lineno, node.col_offset)
         self.pos = pos
         self.id = caculate_hash_id(pos)
         self.node = node
         self.name = node.name
-        self.signature = "%s(%s)"%(node.name, ", ".join(param_names))
+        self.signature = "%s(%s)" % (node.name, ", ".join(param_names))
         self.abstract = abst
         self.file = file
         self.comment = ""
@@ -44,18 +45,19 @@ class Callabale:
             "private": False,
         }
 
+
 class Abstract:
     """Class representing a Python class"""
 
     pos: str
     name: str
-    file: any # File
+    file: any  # File
     comment: str
     fields: list[str]
     node: any
 
     def __init__(self, node: any, fields: list[str], file: any):
-        pos = "%s:%s:%s"%(file.path, node.lineno, node.col_offset)
+        pos = "%s:%s:%s" % (file.path, node.lineno, node.col_offset)
         self.pos = pos
         self.id = caculate_hash_id(pos)
         self.node = node
@@ -74,21 +76,22 @@ class Abstract:
             "fields": self.fields,
         }
 
+
 class Call:
     """Class representing a Python class"""
 
     pos: str
     caller: str
     callee: str
-    file: any # File
+    file: any  # File
     type: str
 
     def __init__(self, caller: str, callee: str, typ: str, node: any, file: any):
-        pos = "%s:%s:%s"%(file.path, node.lineno, node.col_offset)
+        pos = "%s:%s:%s" % (file.path, node.lineno, node.col_offset)
         self.pos = pos
         self.id = caculate_hash_id(pos)
         self.caller = caller
-        self.file =file
+        self.file = file
         self.callee = callee
         self.type = typ
 

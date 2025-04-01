@@ -1,14 +1,17 @@
-from utils import caculate_hash_id  # type: ignore
-import os
 import ast
+import os
 from parser import Parser
-from common import DepType
 from typing import Self
-from utils import is_source, format_path
 
-from protocol.pkg import SourcePkg
+from common import DepType
 from protocol.dep import SourceDep
 from protocol.file import SourceFile
+from protocol.pkg import SourcePkg
+from utils import (
+    caculate_hash_id,  # type: ignore
+    format_path,
+    is_source,
+)
 
 
 class Dir:
@@ -52,7 +55,7 @@ class File:
     source: bool
     ast: str
     error: str
-    parser: Parser|None
+    parser: Parser | None
     imps: set[Self]
 
     def __init__(self, path: str, dir: Dir):
@@ -67,14 +70,14 @@ class File:
         self.parser = None
         self.dir_ptr = None
         self.imps = set()
-    
+
     def parse(self, lookup: any):
-        with open(self.path, 'r') as file:
+        with open(self.path, "r") as file:
             content = file.read()
             self.ast = ast.parse(content)
         self.parser = Parser(self, lookup)
         self.parser.parse_source()
-    
+
     def connect(self):
         for d in self.parser.deps.values():
             if d.typ == DepType.FILE:
@@ -108,6 +111,7 @@ class File:
         }
         return result
 
+
 class Dep:
     """Class representing a dependency"""
 
@@ -117,7 +121,7 @@ class Dep:
     file_ptr: str
     pkg_ptr: str
 
-    def __init__(self, ptr: File|Dir, typ: DepType):
+    def __init__(self, ptr: File | Dir, typ: DepType):
         self.id = caculate_hash_id(ptr.path)
         self.name = ptr.path
         self.typ = typ
@@ -125,7 +129,7 @@ class Dep:
             self.pkg_ptr = ptr
         else:
             self.file_ptr = ptr
-    
+
     def dump(self) -> SourceDep:
         assert self.typ != DepType.PKG
         type = "file"
