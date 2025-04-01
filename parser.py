@@ -39,7 +39,7 @@ class Parser:
         elif isinstance(node, ast.FunctionDef):
             self.parse_function_def(node)
         elif isinstance(node, ast.ClassDef):
-            pass
+            self.parse_class_def(node)
         elif isinstance(node, ast.Call):
             pass
 
@@ -54,3 +54,19 @@ class Parser:
             return
         fn = Callabale("", node, self.file)
         self.fns[node.name] = fn
+
+    def parse_class_def(self, node):
+        fields = []
+        for body_item in node.body:
+            if isinstance(body_item, ast.Assign):
+                for target in body_item.targets:
+                    if isinstance(target, ast.Name):
+                        fields.append(target.id)
+
+            elif isinstance(body_item, ast.FunctionDef):
+                fn = Callabale(node.name, body_item, self.file)
+                self.fns["%s.%s"%(node.name, body_item.name)] = fn
+                self.visited_set.add(body_item)
+
+            self.absts[node.name] = Abstract(node, fields, self.file)
+
