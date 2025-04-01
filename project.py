@@ -1,10 +1,16 @@
-from sourcecode import Dir, File, Dep
 import os
-from common import DepType
-from monty import PARSER_NAME, VESION, LANG, TYPE_NORMAL, DEFAULT_EXCLUDE_DIRECTORIES, DEFAULT_INCLUDE_FILE_TYPES
-
-from protocol.map import Source
 from datetime import datetime, timezone
+
+from common import DepType
+from monty import (
+    LANG,
+    PARSER_NAME,
+    TYPE_NORMAL,
+    VESION,
+)
+from protocol.map import Source
+from sourcecode import Dep, Dir, File
+
 
 class Project:
     """Class representing a project"""
@@ -21,7 +27,9 @@ class Project:
     files: dict[str, File]
     deps: dict[str, Dep]
 
-    def __init__(self, name: str, path: str, directory: str, excludes: str, file_types: str):
+    def __init__(
+        self, name: str, path: str, directory: str, excludes: str, file_types: str
+    ):
         self.name = name
         self.path = path
         self.abs_path = os.path.abspath(path)
@@ -37,7 +45,7 @@ class Project:
 
         self.build_excludes(excludes)
         self.parse_file_types(file_types)
-    
+
     def build_excludes(self, excls: str):
         excludes_list = excls.split(",")
         for excl in excludes_list:
@@ -47,7 +55,7 @@ class Project:
             else:
                 excl_absp = os.path.join(self.abs_path, excl_normalized)
                 self.excludes.add(excl_absp)
-    
+
     def parse_file_types(self, file_types: str):
         file_types_list = file_types.split(",")
         for typ in file_types_list:
@@ -79,7 +87,7 @@ class Project:
             isDir = os.path.isdir(current_entry)
             if isDir:
                 pkg = Dir(current_entry)
-                self.dirs[current_entry] =pkg
+                self.dirs[current_entry] = pkg
                 self.deps[current_entry] = Dep(pkg, DepType.PKG)
                 self.traverse(current_entry)
             else:
@@ -114,21 +122,21 @@ class Project:
         for f in self.files.values():
             if f.source:
                 f.liftup()
-    
+
     def complete_fields(self):
         pass
-    
+
     # 0: all, 1: pkg, 2: file
-    def lookup(self, name: str, typ: int) -> Dep|None:
+    def lookup(self, name: str, typ: int) -> Dep | None:
         if typ == 2:
-            return self.deps.get(name+".py")
+            return self.deps.get(name + ".py")
         if typ == 1:
             return self.deps.get(name)
         else:
             r = self.deps.get(name)
             if r != None:
                 return r
-            return self.deps.get(name+".py")
+            return self.deps.get(name + ".py")
 
     def dump(self) -> Source:
         now = datetime.now(timezone.utc).astimezone()
@@ -136,7 +144,7 @@ class Project:
         result = {
             "name": self.name,
             "lang": LANG,
-            "parser": "%s %s"%(PARSER_NAME, VESION),
+            "parser": "%s %s" % (PARSER_NAME, VESION),
             "typ": TYPE_NORMAL,
             "timestamp": now.isoformat(),
             "repository": "",
