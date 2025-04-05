@@ -5,8 +5,9 @@ from common import DepType
 from monty import (
     LANG,
     PARSER_NAME,
+    PARSER_VESION,
+    PROTOL_VESION,
     TYPE_NORMAL,
-    VESION,
 )
 from protocol.map import Source
 from sourcecode import Dep, Dir, File
@@ -103,7 +104,7 @@ class Project:
                     continue
                 d = self.lookup(dir, 1)
 
-                assert d != None and d.typ == DepType.PKG
+                assert d is not None and d.typ == DepType.PKG
 
                 file = File(current_entry, d.pkg_ptr)
                 self.deps[current_entry] = Dep(file, DepType.FILE)
@@ -134,7 +135,7 @@ class Project:
             return self.deps.get(name)
         else:
             r = self.deps.get(name)
-            if r != None:
+            if r is not None:
                 return r
             return self.deps.get(name + ".py")
 
@@ -144,7 +145,8 @@ class Project:
         result = {
             "name": self.name,
             "lang": LANG,
-            "parser": "%s %s" % (PARSER_NAME, VESION),
+            "parser": "%s %s" % (PARSER_NAME, PARSER_VESION),
+            "protocol": PROTOL_VESION,
             "typ": TYPE_NORMAL,
             "timestamp": now.isoformat(),
             "repository": "",

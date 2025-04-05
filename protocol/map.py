@@ -14,6 +14,7 @@ Source = TypedDict(
         "name": str,
         "lang": str,
         "parser": str,
+        "protocol": str,
         "timestamp": str,
         "typ": str,
         "repository": str,

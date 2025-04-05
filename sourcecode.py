@@ -53,13 +53,13 @@ class File:
     name: str
     dir: Dir
     source: bool
-    ast: str
+    ast: any
     error: str
     parser: Parser | None
     imps: set[Self]
 
     def __init__(self, path: str, dir: Dir):
-        assert dir != None
+        assert dir is not None
 
         self.id = caculate_hash_id(path)
         self.path = path
@@ -67,6 +67,7 @@ class File:
         self.dir = dir
         self.source = is_source(path)
         self.error = ""
+        self.ast = None
         self.parser = None
         self.dir_ptr = None
         self.imps = set()
@@ -104,6 +105,9 @@ class File:
             "id": self.id,
             "name": self.name,
             "path": noramlized_path,
+            "source": self.source,
+            "parsed": self.ast is not None,
+            "error": "",
             "pkg": self.dir.id,
             "imports": imports,
             # "deps": [item for item in deps],
